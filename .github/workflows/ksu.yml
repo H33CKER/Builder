@@ -1,0 +1,39 @@
+name: Kernel Build
+
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: "Branch to build"
+        required: true
+        default: "main"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Clone kernel source (selected branch)
+        run: |
+          git clone --depth=1 --branch "${{ github.event.inputs.branch }}" https://github.com/h33cker/upstream_a22x.git source
+
+      - name: Setup KernelSU
+        run: |
+          cd source
+          curl -LSs "https://raw.githubusercontent.com/backslashxx/KernelSU/master/kernel/setup.sh" | bash -s master
+
+      - name: Make build script executable
+        run: |
+          cd source
+          chmod +x build.sh
+
+      - name: Run build script
+        run: |
+          cd source
+          ./build.sh
+
+      - name: Upload AK3 zip
+        uses: actions/upload-artifact@v4
+        with:
+          name: ak3-${{ github.event.inputs.branch }}
+          path: source/output/*.zip
